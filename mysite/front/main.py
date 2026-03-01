@@ -13,11 +13,13 @@ from mysite.front.diabetes_front import diabetes_chek
 from mysite.front.avocado_front import avocado_chek
 from mysite.front.mushrooms_front import mushrooms_chek
 from mysite.front.telecom_front import telecom
+from mysite.front.employee_front import check_hr
 
 
 with st.sidebar:
     name = st.radio(label='Models: ', options=['Info', 'Student', 'Titanic', 'House', 'Bank',
-                                                'Diabetes', 'Avocado', 'Mushroom', 'Telecom'])
+                                                'Diabetes', 'Avocado', 'Mushroom', 'Telecom',
+                                               'HREmployee'])
 
 if name == 'Info':
     st.title('Welcome')
@@ -46,3 +48,5 @@ elif name == 'Mushroom':
     mushrooms_chek()
 elif name == 'Telecom':
     telecom()
+elif name == 'HREmployee':
+    check_hr()

@@ -2,7 +2,7 @@ from rest_framework import views, status
 from rest_framework.response import Response
 from .serializers import (StudentPerformanceSerializers, TitanicSerializers, HouseSerializers,
                           BankSerializers, DiabetesSerializers, AvocadoSerializers,
-                          MushroomSerializers, TelecomSerializers)
+                          MushroomSerializers, TelecomSerializers, HREmployeeSerializers)
 from django.conf import settings
 import numpy as np
 import joblib
@@ -56,6 +56,12 @@ model_path = os.path.join(settings.BASE_DIR, 'MLmodels', 'telecom_model.pkl')
 
 telecom_scaler = joblib.load(scaler_path)
 telecom_model = joblib.load(model_path)
+
+scaler_path_hr = os.path.join(settings.BASE_DIR, 'MLmodels', 'scaler_Hr.pkl')
+model_path_hr = os.path.join(settings.BASE_DIR, 'MLmodels', 'model_Hr.pkl')
+
+hre_scaler = joblib.load(scaler_path_hr)
+hre_model = joblib.load(model_path_hr)
 
 # Student Per
 gender = ['male']
@@ -117,6 +123,19 @@ StreamingMovies = ['No internet service', 'Yes']
 Contract = ['One year', 'Two year']
 PaperlessBilling = ['Yes']
 PaymentMethod = ['Credit card (automatic)', 'Electronic check', 'Mailed check']
+
+# HREmployee
+
+BusinessTravel = ['Travel_Frequently', 'Travel_Rarely']
+Department = ['Research & Development', 'Sales']
+EducationField = ['Life Sciences', 'Marketing', 'Medical', 'Other', 'Technical Degree']
+Gender = ['Male']
+JobRole = ['Human Resources', 'Laboratory Technician', 'Manager',
+           'Manufacturing Director', 'Research Director', 'Research Scientist',
+           'Sales Executive', 'Sales Representative']
+MaritalStatus = ['Married', 'Single']
+OverTime = ['Yes']
+
 
 # Student Views
 
@@ -422,4 +441,49 @@ class Telecom(views.APIView):
             else:
                 telecom_label = 'No'
             return Response({'Churn': telecom_label, 'Probability': round(probability, 2)}, status.HTTP_200_OK)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+# HREmployee
+
+class HREmployee(views.APIView):
+    def post(self, request):
+        serializer = HREmployeeSerializers(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            new_business = data.get('BusinessTravel')
+            business1_0 = [1 if new_business == i else 0 for i in BusinessTravel]
+
+            new_department = data.get('Department')
+            department1_0 = [1 if new_department == i else 0 for i in Department]
+
+            new_education = data.get('EducationField')
+            education1_0 = [1 if new_education == i else 0 for i in EducationField]
+
+            new_gender = data.get('Gender')
+            gender1_0 = [1 if new_gender == i else 0 for i in Gender]
+
+            new_job = data.get('JobRole')
+            job1_0 = [1 if new_job == i else 0 for i in JobRole]
+
+            new_marital = data.get('MaritalStatus')
+            marital1_0 = [1 if new_marital == i else 0 for i in MaritalStatus]
+
+            new_over = data.get('OverTime')
+            over1_0 = [1 if new_over == i else 0 for i in OverTime]
+
+            features = ([data['Age'], data['DailyRate'], data['DistanceFromHome'], data['Education'], data['EnvironmentSatisfaction'],
+                         data['HourlyRate'], data['JobInvolvement'], data['JobLevel'], data['JobSatisfaction'], data['MonthlyIncome'],
+                         data['MonthlyRate'], data['NumCompaniesWorked'], data['PercentSalaryHike'], data['PerformanceRating'],
+                         data['RelationshipSatisfaction'], data['StockOptionLevel'], data['TotalWorkingYears'], data['TrainingTimesLastYear'],
+                         data['WorkLifeBalance'], data['YearsAtCompany'], data['YearsInCurrentRole'], data['YearsSinceLastPromotion'],
+                         data['YearsWithCurrManager']] + business1_0 + department1_0 + education1_0 + gender1_0 + job1_0 + marital1_0
+                        + over1_0)
+            scaled_data = hre_scaler.transform([features])
+            proba = hre_model.predict_proba(scaled_data)[0]
+            probability = float(proba[1])
+            if probability > 0.5:
+                hre_label = 'Yes'
+            else:
+                hre_label = 'No'
+            return Response({'Attrition': hre_label, 'Probability': round(probability, 2)}, status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
