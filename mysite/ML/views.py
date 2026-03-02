@@ -485,5 +485,5 @@ class HREmployee(views.APIView):
                 hre_label = 'Yes'
             else:
                 hre_label = 'No'
-            return Response({'Attrition': hre_label, 'Probability': round(probability, 2)}, status.HTTP_200_OK)
+            return Response({'Attrition': hre_label})
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
